@@ -1,0 +1,54 @@
+version: "3"
+
+services:
+  web:
+    build:
+      context: .
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+      - meilisearch
+    networks:
+      - calcnet
+    environment:
+      NODE_ENV: production
+    volumes:
+      - /mnt/puffer/Sharkey/files:/sharkey/files
+      - .config:/sharkey/.config:ro
+
+  redis:
+    restart: unless-stopped
+    image: docker.io/redis:7.0-alpine
+    networks:
+      - calcnet
+    volumes:
+      - /mnt/puffer/Sharkey/redis:/data
+
+  db:
+    restart: unless-stopped
+    image: docker.io/postgres:15-alpine
+    networks:
+      - calcnet
+    environment:
+      POSTGRES_PASSWORD: misskey
+      POSTGRES_USER: misskey
+      POSTGRES_DB: misskey
+    volumes:
+      - /mnt/puffer/Sharkey/db:/var/lib/postgresql/data
+
+  meilisearch:
+    restart: always
+    image: getmeili/meilisearch:v1.3.4
+    environment:
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_ENV=production
+      - MEILI_MASTER_KEY=misskeymeilisearch
+    networks:
+      - calcnet
+    volumes:
+      - /mnt/puffer/Sharkey/meili_data:/meili_data
+
+networks:
+  calcnet: {}
+

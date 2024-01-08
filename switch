@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+args=""
+cmd="switch"
+
+if [ "$1" == "debug" ]; then
+    args="--show-trace -v -L"
+    shift
+fi
+
+if [ "$1" == "build" ]; then
+    cmd="build"
+    shift
+fi
+
+if [ "$1" == "dry-activate" ]; then
+    cmd="dry-activate"
+    shift
+fi
+
+if [ "$1" == "boot" ]; then
+    cmd="boot"
+    shift
+fi
+
+sudo nixos-rebuild $cmd --flake . $args $@

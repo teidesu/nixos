@@ -1,0 +1,72 @@
+url: https://very.stupid.fish
+port: 80
+
+db:
+  host: db
+  port: 5432
+  db: misskey
+  user: misskey
+  pass: misskey
+
+dbReplications: false
+
+redis:
+  host: redis
+  port: 6379
+
+#   ┌───────────────────────────┐
+#───┘ MeiliSearch configuration └─────────────────────────────
+
+meilisearch:
+  host: meilisearch
+  port: 7700
+  apiKey: misskeymeilisearch
+  index: ''
+  scope: global
+
+id: 'aidx'
+
+# Number of worker processes
+clusterLimit: 2
+
+maxNoteLength: 30000
+
+proxyBypassHosts:
+  - api.deepl.com
+  - api-free.deepl.com
+  - www.recaptcha.net
+  - hcaptcha.com
+  - challenges.cloudflare.com
+
+# Media Proxy
+# Reference Implementation: https://github.com/misskey-dev/media-proxy
+# * Deliver a common cache between instances
+# * Perform image compression (on a different server resource than the main process)
+#mediaProxy: https://example.com/proxy
+
+# Proxy remote files (default: true)
+# Proxy remote files by this instance or mediaProxy to prevent remote files from running in remote domains.
+proxyRemoteFiles: false
+
+# Movie Thumbnail Generation URL
+# There is no reference implementation.
+# For example, Misskey will point to the following URL:
+#   https://example.com/thumbnail.webp?thumbnail=1&url=https%3A%2F%2Fstorage.example.com%2Fpath%2Fto%2Fvideo.mp4
+#videoThumbnailGenerator: https://example.com
+
+# Sign to ActivityPub GET request (default: true)
+signToActivityPubGet: true
+# check that inbound ActivityPub GET requests are signed ("authorized fetch")
+checkActivityPubGetSignature: false
+
+# For security reasons, uploading attachments from the intranet is prohibited,
+# but exceptions can be made from the following settings. Default value is "undefined". 
+# Read changelog to learn more (Improvements of 12.90.0 (2021/09/04)).
+#allowedPrivateNetworks: [
+#  '127.0.0.1/32'
+#]
+
+#customMOTD: ['Hello World', 'The sharks rule all', 'Shonks']
+
+# Upload or download file size limits (bytes)
+maxFileSize: 262144000

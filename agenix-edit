@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set +euo pipefail
+
+name="$1"
+
+script_dir=$(dirname "$(readlink -f "$0")")
+public_key=$(cat "$script_dir/ssh/agenix.pub")
+fullname="$script_dir/secrets/$name.age"
+
+if [ -z "$name" ]; then
+    echo "Usage: $0 <name>"
+    exit 1
+fi
+
+tempfile="$(mktemp)"
+micro_config_dir="$(mktemp -d)"
+trap "rm -rf $tempfile $micro_config_dir" EXIT
+
+cat > "$tempfile" <<EOF
+{ 
+  "$fullname".publicKeys = [ "$public_key" ];
+}
+EOF
+
+echo '{"eofnewline": false}' > "$micro_config_dir/settings.json"
+
+export MICRO_CONFIG_HOME="$micro_config_dir"
+export EDITOR=micro
+export RULES="$tempfile"
+agenix -e "$fullname" --identity /etc/ssh/agenix_key
