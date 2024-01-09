@@ -120,7 +120,7 @@ let
     keys.ed25519 = sftpKey.path;
 
     users.guest = {
-      # argon-hashed 0
+      # bcrypt-hashed 0
       password = "$2a$10$IcGdNtx10ycmPRD6lA4c0uNfRXTEchFRzCZEDkngTjzForn6pd0Wa";
     };
 

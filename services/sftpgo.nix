@@ -135,7 +135,7 @@ in
       # username => { 
       #  home?: string, # defaults to /tmp/username
       #  description?: string, 
-      #  password?: string,  # argon2 hashed
+      #  password?: string,  # bcrypt hashed
       #  publicKeys?: string[] 
       #  permisisons?: Record<string, string>, e.g, 
       # }
@@ -143,12 +143,12 @@ in
       # name => { description?: string, path: string }
     , folders ? { }
       # username => { 
-      #  password: string, # argon2 hashed
+      #  password: string, # bcrypt hashed
       #  description?: string, 
       #  email?: string, 
       # }
     , admins ? {
-        # argon2 hash of password "admin"
+        # bcrypt hash of password "admin"
         admin.password = "$2a$10$7QZqmQNWwfbgIwc5Jskkgea7s8dffkbwPUW30MEShpDpZWxMVrFaa";
       }
       # array of { 
