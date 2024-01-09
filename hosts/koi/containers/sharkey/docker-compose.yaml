@@ -6,9 +6,12 @@ services:
       context: .
     restart: unless-stopped
     depends_on:
-      - db
-      - redis
-      - meilisearch
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch: 
+        condition: service_started
     networks:
       - calcnet
     environment:
@@ -23,7 +26,11 @@ services:
     networks:
       - calcnet
     volumes:
-      - /mnt/puffer/Sharkey/redis:/data
+      - /srv/Sharkey/redis:/data
+    healthcheck:
+      test: "redis-cli ping"
+      interval: 5s
+      retries: 20
 
   db:
     restart: unless-stopped
@@ -35,7 +42,11 @@ services:
       POSTGRES_USER: misskey
       POSTGRES_DB: misskey
     volumes:
-      - /mnt/puffer/Sharkey/db:/var/lib/postgresql/data
+      - /srv/Sharkey/db:/var/lib/postgresql/data
+    healthcheck:
+      test: "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
+      interval: 5s
+      retries: 20
 
   meilisearch:
     restart: always

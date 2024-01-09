@@ -1,0 +1,10 @@
+--- packages/backend/built/server/web/views/base.pug
++++ packages/backend/built/server/web/views/base.pug
+@@ -44,6 +44,7 @@
+ 		link(rel='stylesheet' href='/static-assets/fonts/sharkey-icons/style.css')
+ 		link(rel='modulepreload' href=`/vite/${clientEntry.file}`)
+ 		script(src='/client-assets/libopenmpt.js')
++		script(src='https://zond.tei.su/script.js' data-website-id="9629ae3b-b086-4be1-acd2-82e2a4a58c2a")
+ 
+ 		if !config.clientManifestExists
+ 				script(type="module" src="/vite/@vite/client")

@@ -1,5 +1,5 @@
 --- packages/backend/built/server/api/endpoints/notes/translate.js
-+++ packages/backend/built/server/api/endpoints/notes/translate.js.orig
++++ packages/backend/built/server/api/endpoints/notes/translate.js
 @@ -99,7 +99,7 @@
              params.append('auth_key', instance.deeplAuthKey);
              params.append('text', note.text);

@@ -9,6 +9,7 @@
 
   systemd.tmpfiles.rules = [
     "d /mnt/puffer/Sharkey 0777 root root -"
+    "d /srv/Sharkey 0777 root root -"
   ];
 
   services.nginx.virtualHosts."very.stupid.fish" = {
