@@ -1,16 +1,23 @@
-{ abs, lib, pkgs, ... }@inputs:
+{ abs, lib, config, pkgs, ... }@inputs:
 
 let
-  containers = (import (abs "lib/containers.nix") inputs);
-  avahi = (import (abs "lib/avahi.nix") inputs);
-  systemd = (import (abs "lib/systemd.nix") inputs);
-in
-containers.mkNixosContainer {
-  name = "puffer";
-  ip = "10.42.0.5";
-  private = false;
+  containers = import (abs "lib/containers.nix") inputs;
+  avahi = import (abs "lib/avahi.nix") inputs;
+  systemd = import (abs "lib/systemd.nix") inputs;
+  sftpgo = import (abs "services/sftpgo.nix") inputs;
+  secrets = import (abs "lib/secrets.nix");
 
-  config = { ... }: {
+  sftpKey = secrets.mount config "sftpgo-ed25519";
+
+  sambaConfig = {
+    imports = [
+      (systemd.mkOneshot {
+        name = "smb-guest-setup";
+        # for whatever reason smbd refuses to write unless we set the password
+        script = "${pkgs.samba}/bin/smbpasswd -a smb-guest -n";
+      })
+    ];
+
     services.samba = {
       enable = true;
       openFirewall = true;
@@ -81,49 +88,90 @@ containers.mkNixosContainer {
           };
         };
     };
+  };
 
-    imports = [
-      (systemd.mkOneshot {
-        name = "smb-guest-setup";
-        # for whatever reason smbd refuses to write unless we set the password
-        script = "${pkgs.samba}/bin/smbpasswd -a smb-guest -n";
-      })
-      (avahi.setup {
-        name = "puffer";
-        services = [
-          { type = "_smb._tcp"; port = 445; }
-          # cancer stuff for macs to see this disk as a time machine-compatible disk
-          [
-            { type = "_adisk._tcp"; port = 9; }
-            { txt-record = "sys=waMa=0,adVF=0x100"; }
-            { txt-record = "dk0=adVN=Puffer TimeMachine,adVF=0x82"; }
-          ]
-          { type = "_device-info._tcp"; port = 0; txt-record = "model=TimeCapsule8,119"; }
+  avahiConfig = avahi.setup {
+    name = "puffer";
+    services = [
+      { type = "_smb._tcp"; port = 445; }
+      # cancer stuff for macs to see this disk as a time machine-compatible disk
+      [
+        { type = "_adisk._tcp"; port = 9; }
+        { txt-record = "sys=waMa=0,adVF=0x100"; }
+        { txt-record = "dk0=adVN=Puffer TimeMachine,adVF=0x82"; }
+      ]
+      { type = "_device-info._tcp"; port = 0; txt-record = "model=TimeCapsule8,119"; }
+    ];
+  };
+
+  sftpgoConfig = sftpgo.setup {
+    package = pkgs.callPackage (abs "packages/sftpgo.nix") {
+      tags = [ "nogcs" "nos3" "noazblob" "nobolt" "nomysql" "nopgsql" "nometrics" "bundle" ];
+    };
+
+    config = {
+      sftpd = {
+        bindings = [
+          { port = 22; }
         ];
-      })
-    ];
+        host_keys = [ "id_ed25519" ];
+      };
+    };
+    keys.ed25519 = sftpKey.path;
 
-    users.groups.puffer = { };
-    users.users.smb-guest = {
-      isNormalUser = true;
-      description = "Guest account for Samba";
-      extraGroups = [ "puffer" ];
-      createHome = false;
-      shell = pkgs.shadow;
+    users.guest = {
+      # argon-hashed 0
+      password = "$2a$10$IcGdNtx10ycmPRD6lA4c0uNfRXTEchFRzCZEDkngTjzForn6pd0Wa";
     };
 
-    systemd.tmpfiles.rules = [
-      "d /mnt/puffer/Public 0755 smb-guest puffer - -"
-      "d /mnt/puffer/Backups 0755 smb-guest puffer - -"
+    folders.Public.path = "/mnt/puffer/Public";
+
+    usersFolders = [
+      { username = "guest"; folder = "Public"; }
     ];
-
   };
 
-  mounts = {
-    "/mnt/puffer" = {
-      hostPath = "/mnt/puffer";
-      isReadOnly = false;
+  container = containers.mkNixosContainer {
+    name = "puffer";
+    ip = "10.42.0.5";
+    private = false;
+
+    config = { ... }: {
+      imports = [
+        sambaConfig
+        avahiConfig
+        sftpgoConfig
+      ];
+
+      users.groups.puffer = { };
+      users.users.smb-guest = {
+        isNormalUser = true;
+        description = "Guest account for Samba";
+        extraGroups = [ "puffer" ];
+        createHome = false;
+        shell = pkgs.shadow;
+      };
+
+      systemd.tmpfiles.rules = [
+        "d /mnt/puffer/Public 0755 smb-guest puffer - -"
+        "d /mnt/puffer/Backups 0755 smb-guest puffer - -"
+      ];
+
+      networking.firewall.allowedTCPPorts = [ 22 ];
     };
+
+    mounts = {
+      "/mnt/puffer" = {
+        hostPath = "/mnt/puffer";
+        isReadOnly = false;
+      };
+    } // (sftpKey.mounts);
   };
+in
+{
+  imports = [
+    (secrets.declare [ "sftpgo-ed25519" ])
+    container
+  ];
 }
 
